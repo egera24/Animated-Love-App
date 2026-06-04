@@ -1,0 +1,27 @@
+[
+  {
+    "title": "A Gyűrűk Ura",
+    "author": "J. R. R. Tolkien",
+    "blurb": "Ha ma kaland kell: középföld, barátság, és egy kis tea a Völgyben."
+  },
+  {
+    "title": "Harry Potter és a bölcsek köve",
+    "author": "J. K. Rowling",
+    "blurb": "Roxfort, repülő seprű, és a barátság ereje — tökéletes egy esti olvasáshoz."
+  },
+  {
+    "title": "A szél neve",
+    "author": "Patrick Rothfuss",
+    "blurb": "Lassú, szép fantasy — mint egy meleg takaró a léleknek."
+  },
+  {
+    "title": "Good Omens",
+    "author": "Terry Pratchett & Neil Gaiman",
+    "blurb": "Vicces, szelíd apokalipszis — Edina napjához illő humor."
+  },
+  {
+    "title": "Stardust",
+    "author": "Neil Gaiman",
+    "blurb": "Tündérmese felnőtteknek — csillagok, vándorlás, mosoly."
+  }
+]

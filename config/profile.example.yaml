@@ -1,0 +1,45 @@
+recipient:
+  name: Edina
+  birthday: "11-14"
+
+hedgehog:
+  name: Fahéj
+  personality: playful, humorous
+  default_language: hu
+
+locations:
+  timezone: Europe/Budapest
+  weather_primary: Szeged
+  places:
+    - Szeged
+    - Budapest
+
+special_dates:
+  - date: "11-12"
+    label_hu: "Esküvői évforduló"
+    mood: celebrate
+  - date: "08-19"
+    label_hu: "Eljegyzési évforduló"
+    mood: happy
+
+interests:
+  fantasy:
+    - "Lord of the Rings"
+    - "Harry Potter"
+    - "Elden Ring"
+  movies:
+    - comedy
+  series:
+    - "TLC reality"
+
+content:
+  default_language: hu
+
+modules_enabled:
+  photos: true
+  weather: true
+  birthday: true
+  poem: false    # set true for daily poem card on Ma tab
+  book: false    # set true for daily book tip
+  movie: false   # set true for daily movie tip
+  news: false

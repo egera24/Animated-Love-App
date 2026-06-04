@@ -1,0 +1,124 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background: linear-gradient(165deg, var(--color-bg) 0%, var(--color-bg-soft) 100%);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 1rem 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tab-bar button {
+  flex: 1;
+  min-width: 4.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 2px solid var(--color-bubble-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.tab-bar button.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent-deep);
+  color: #fff;
+}
+
+.tab-bar button:hover:not(.active) {
+  background: var(--color-bg-soft);
+}
+
+.login-page {
+  max-width: 360px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.login-page h1 {
+  margin: 0 0 0.5rem;
+  color: var(--color-accent-deep);
+}
+
+.login-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.login-page input {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-bubble-border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+}
+
+.login-page button[type="submit"] {
+  padding: 0.75rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-honey);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.login-page button[type="submit"]:hover {
+  background: var(--color-honey-dark);
+}
+
+.error-text {
+  color: var(--color-accent-deep);
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  align-self: flex-end;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--color-bubble-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}

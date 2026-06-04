@@ -1,0 +1,47 @@
+{
+  "idle": [
+    "Szia, Edina! Fahéj vagyok — ma is itt szundikálok melletted.",
+    "Edina! Csak bekukkantok: ma is jó napod legyen!",
+    "Hmm… ma csendes nap. Tökéletes egy kis tea mellé.",
+    "Ha ma semmi sem sikerül: legalább egy süninek vagy a hőse. (Én vagyok az.)"
+  ],
+  "happy": [
+    "Edina! Ma olyan jó kedvem van, mintha megtaláltam volna a nap utolsó mogyorót!",
+    "Jó nap ez! Mondjuk úgy, fél mogyoróval is boldog vagyok.",
+    "Ma olyan derűs vagyok, hogy a tüskéim is nevetnek — na jó, csak remegnek örömtől."
+  ],
+  "cozy": [
+    "Esik odakint? Akkor bevágok a pihébe — te is burkolózz be!",
+    "Ilyen időben a legjobb: meleg takaró, tea, és egy kis „szemét” sorozat. (Tudom, szereted.)",
+    "Esős nap = hivatalos sünifészek üzemmód. Melegítőt javaslok neked is."
+  ],
+  "sleepy": [
+    "Hó van? Én ilyenkor extra gömbölyűre állítom a tüskéimet.",
+    "Csendes, szürke nap — tökéletes egy szundira.",
+    "Ma lustálkodós üzemmód. Te is pihenhetsz egy percet."
+  ],
+  "celebrate": [
+    "Edina!!! Ma ünnepelünk! (A tüskéim is konfettinek hiszik magukat.)",
+    "Boldog ünnepet! Ha lenne kalapom, most dobálnám — de a tüskéim is elég díszesek."
+  ],
+  "curious": [
+    "Nézzük a képeket! Vagy… van még mogyoró a háznál?",
+    "Kattints rám, ha unatkozol — nem harapok. (Ritkán.)"
+  ],
+  "birthday": [
+    "Edina! Boldog születésnapot! Ma én vagyok a hivatalos sünimese-felolvasó!",
+    "Boldog születésnapot! Ígérem, ma nem morcoskodom — csak ha elfogy a torta.",
+    "14. november = Edina-nap! A Föld ma egy kicsit szebb. (Nem vagyok elfogult.)"
+  ],
+  "wedding_anniversary": [
+    "Esküvői évforduló! Edina, ma különösen sok szeretet pörög a levegőben — én is érzem, pedig csak sün vagyok.",
+    "Boldog esküvői évfordulót! Ti ketten: 1, a világ többi része: 0."
+  ],
+  "engagement_anniversary": [
+    "Eljegyzési évforduló! Még mindig libabőrös vagyok tőle — tüskékben is lehet?",
+    "Ma az a nap, amikor minden elkezdődött — na jó, nektek. Én csak tapsolok."
+  ],
+  "weather_intro": [
+    "{city}: {temp}°C, {desc}."
+  ]
+}

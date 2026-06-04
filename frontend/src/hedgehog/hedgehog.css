@@ -1,0 +1,144 @@
+.hedgehog-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+  margin: 0.5rem 0 1rem;
+}
+
+.hedgehog-svg {
+  width: min(280px, 85vw);
+  height: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 16px rgba(74, 63, 85, 0.12));
+  transition: transform 0.3s ease;
+}
+
+.hedgehog-svg:hover {
+  transform: scale(1.02);
+}
+
+.hedgehog-svg[data-mood="happy"] {
+  animation: hog-bounce 2s ease-in-out infinite;
+}
+
+.hedgehog-svg[data-mood="celebrate"] {
+  animation: hog-bounce 0.8s ease-in-out infinite;
+}
+
+.hedgehog-svg[data-mood="cozy"] .hog-body {
+  transform-origin: center;
+  animation: hog-cozy 3s ease-in-out infinite;
+}
+
+.hedgehog-svg[data-mood="sleepy"] .hog-eyes-open {
+  opacity: 0;
+}
+
+.hedgehog-svg[data-mood="sleepy"] .hog-eyes-sleepy {
+  opacity: 1;
+}
+
+.hedgehog-svg[data-mood="curious"] {
+  animation: hog-tilt 2.5s ease-in-out infinite;
+}
+
+.hedgehog-svg[data-mood="idle"] .hog-body {
+  animation: hog-breathe 4s ease-in-out infinite;
+}
+
+.hedgehog-svg .hog-quills {
+  transform-origin: center bottom;
+}
+
+.hedgehog-svg[data-mood="alert"] .hog-quills {
+  animation: quill-bristle 0.4s ease-in-out infinite alternate;
+}
+
+.hedgehog-svg[data-mood="celebrate"] .hog-sparkles {
+  opacity: 1;
+  animation: sparkle 1.2s ease-in-out infinite;
+}
+
+.hog-eyes-sleepy {
+  opacity: 0;
+}
+
+.hog-sparkles {
+  opacity: 0;
+}
+
+@keyframes hog-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.03);
+  }
+}
+
+@keyframes hog-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes hog-tilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes hog-cozy {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(0.98) translateY(2px);
+  }
+}
+
+@keyframes quill-bristle {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes nose-sniff {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+.hedgehog-svg .hog-nose {
+  animation: nose-sniff 2s ease-in-out infinite;
+}

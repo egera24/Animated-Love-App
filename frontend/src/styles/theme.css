@@ -1,0 +1,29 @@
+:root {
+  --color-bg: #fff8f3;
+  --color-bg-soft: #ffe8dc;
+  --color-surface: #ffffff;
+  --color-text: #4a3f55;
+  --color-text-muted: #7d6b8a;
+  --color-accent: #e8a598;
+  --color-accent-deep: #d4847a;
+  --color-honey: #d4a574;
+  --color-honey-dark: #b8895a;
+  --color-sage: #a8c5b5;
+  --color-blush: #f5c4c4;
+  --color-bubble: #ffffff;
+  --color-bubble-border: #f0d4cc;
+  --shadow-soft: 0 8px 32px rgba(74, 63, 85, 0.08);
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --font-main: "Nunito", system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

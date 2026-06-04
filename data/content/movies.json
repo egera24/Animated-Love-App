@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Amélie csodálatos élete",
+    "year": "2001",
+    "blurb": "Meleg, bolondos Párizs — olyan, mint egy jó cappuccino a szívnek."
+  },
+  {
+    "title": "A Nagy Lebowski",
+    "year": "1998",
+    "blurb": "Komédia, laza hangulat — ha ma nem kell komolyan venni semmit."
+  },
+  {
+    "title": "Paddington",
+    "year": "2014",
+    "blurb": "Édes, családias humor — marmalade és jó szív."
+  },
+  {
+    "title": "The Princess Bride",
+    "year": "1987",
+    "blurb": "Kaland, szerelem, idézhető poénok — klasszikus esti film."
+  },
+  {
+    "title": "Little Miss Sunshine",
+    "year": "2006",
+    "blurb": "Családi road movie, keserédes nevetés — összetartozás minden furcsaság ellen."
+  }
+]
