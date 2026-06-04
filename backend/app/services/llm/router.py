@@ -61,6 +61,10 @@ def _build_user_prompt(
     interests = context.get("interests")
     if interests:
         lines.append(f"Érdeklődések (utalhat rájuk finoman): {json.dumps(interests, ensure_ascii=False)}")
+    if context.get("interactive_refresh"):
+        lines.append(
+            "Edina most rád kattintott — írj egy ÚJ, más szöveget, ne ismételd az előző buborékot."
+        )
     lines.append("Írj 1–3 rövid mondatot a bubble_text mezőbe; időjárást említheted ha releváns.")
     return "\n".join(lines)
 

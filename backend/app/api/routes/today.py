@@ -45,6 +45,11 @@ async def get_today(request: Request):
     weather_mood = weather_data.get("mood_hint") if weather_data else None
 
     mood_result = resolve_mood(profile, weather_mood=weather_mood)
+    refresh_bubble = request.query_params.get("refresh_bubble", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     db = SessionLocal()
     try:
@@ -53,6 +58,7 @@ async def get_today(request: Request):
             profile,
             mood_result,
             weather=weather_data,
+            force_refresh=refresh_bubble,
         )
         content_date = _today_in_tz(profile).isoformat()
         after_cache = get_cached(db, content_date, "bubble")
@@ -65,6 +71,7 @@ async def get_today(request: Request):
                 "bubble_len": len(bubble),
                 "bubble_prefix": bubble[:40],
                 "final_source": after_cache.get("source") if after_cache else None,
+                "refresh_bubble": refresh_bubble,
             },
         )
         # #endregion

@@ -6,7 +6,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-_LOG = Path(__file__).resolve().parents[2] / "debug-397eeb.log"
+from app.config import ROOT_DIR
+
+_LOG = ROOT_DIR / "debug-397eeb.log"
 _SESSION = "397eeb"
 
 

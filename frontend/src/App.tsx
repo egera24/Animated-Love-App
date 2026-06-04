@@ -17,10 +17,10 @@ export default function App() {
   const [today, setToday] = useState<TodayData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadToday = useCallback(async () => {
+  const loadToday = useCallback(async (refreshBubble = false) => {
     setError(null);
     try {
-      const data = await fetchToday();
+      const data = await fetchToday(refreshBubble);
       // #region agent log
       fetch(
         "http://127.0.0.1:7310/ingest/2755dbd7-3726-4125-837b-538630925f1b",
@@ -32,11 +32,12 @@ export default function App() {
           },
           body: JSON.stringify({
             sessionId: "397eeb",
-            runId: "pre-fix",
-            hypothesisId: "D",
+            runId: "post-fix",
+            hypothesisId: "F",
             location: "App.tsx:loadToday",
             message: "fetchToday_ok",
             data: {
+              refreshBubble,
               bubbleLen: data.bubble_text.length,
               bubblePrefix: data.bubble_text.slice(0, 40),
             },
@@ -114,7 +115,7 @@ export default function App() {
       {tab === "today" && today && (
         <TodayView
           data={today}
-          onHedgehogTap={() => void loadToday()}
+          onHedgehogTap={() => void loadToday(true)}
         />
       )}
 

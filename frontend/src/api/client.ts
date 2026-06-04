@@ -80,8 +80,9 @@ export async function logout(): Promise<void> {
   await request("/api/auth/logout", { method: "POST" });
 }
 
-export async function fetchToday(): Promise<TodayData> {
-  return request<TodayData>("/api/today");
+export async function fetchToday(refreshBubble = false): Promise<TodayData> {
+  const query = refreshBubble ? "?refresh_bubble=1" : "";
+  return request<TodayData>(`/api/today${query}`);
 }
 
 export async function fetchMedia(page = 1, limit = 20): Promise<MediaList> {
