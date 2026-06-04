@@ -16,39 +16,18 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("today");
   const [today, setToday] = useState<TodayData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bubbleLoading, setBubbleLoading] = useState(false);
 
   const loadToday = useCallback(async (refreshBubble = false) => {
     setError(null);
+    if (refreshBubble) setBubbleLoading(true);
     try {
       const data = await fetchToday(refreshBubble);
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7310/ingest/2755dbd7-3726-4125-837b-538630925f1b",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "397eeb",
-          },
-          body: JSON.stringify({
-            sessionId: "397eeb",
-            runId: "post-fix",
-            hypothesisId: "F",
-            location: "App.tsx:loadToday",
-            message: "fetchToday_ok",
-            data: {
-              refreshBubble,
-              bubbleLen: data.bubble_text.length,
-              bubblePrefix: data.bubble_text.slice(0, 40),
-            },
-            timestamp: Date.now(),
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       setToday(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hiba.");
+    } finally {
+      if (refreshBubble) setBubbleLoading(false);
     }
   }, []);
 
@@ -115,6 +94,7 @@ export default function App() {
       {tab === "today" && today && (
         <TodayView
           data={today}
+          bubbleLoading={bubbleLoading}
           onHedgehogTap={() => void loadToday(true)}
         />
       )}

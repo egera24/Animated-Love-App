@@ -4,8 +4,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.config import ROOT_DIR, get_settings, load_profile
-from app.debug_log import dbg
+from app.config import get_settings, load_profile
 from app.services.content_cache import get_cached, set_cached
 from app.services.fallbacks import build_bubble_text
 from app.services.llm.router import generate_bubble
@@ -27,42 +26,11 @@ async def resolve_bubble_text(
     force_refresh: bool = False,
 ) -> str:
     content_date = _today_key(profile)
-    # #region agent log
-    dbg(
-        "F",
-        "bubble_service.py:resolve_bubble_text",
-        "entry",
-        {"force_refresh": force_refresh, "content_date": content_date},
-    )
-    # #endregion
     cached = get_cached(db, content_date, "bubble")
-    # #region agent log
-    dbg(
-        "A",
-        "bubble_service.py:resolve_bubble_text",
-        "cache_lookup",
-        {
-            "content_date": content_date,
-            "db_path": str(ROOT_DIR / "data" / "app.db"),
-            "cache_hit": bool(cached and cached.get("bubble_text")),
-            "cache_source": cached.get("source") if cached else None,
-            "bubble_len": len(str(cached.get("bubble_text", ""))) if cached else 0,
-            "force_refresh": force_refresh,
-        },
-    )
-    # #endregion
     if not force_refresh and cached and cached.get("bubble_text"):
         # Stale static cache blocks LLM after a single failed provider call — retry when keys exist.
         if cached.get("source") != "static" or not get_settings().has_any_llm_key():
             return str(cached["bubble_text"])
-        # #region agent log
-        dbg(
-            "A",
-            "bubble_service.py:resolve_bubble_text",
-            "static_cache_bypass",
-            {"content_date": content_date},
-        )
-        # #endregion
 
     context = {
         "is_birthday": mood_result.is_birthday,
@@ -77,14 +45,6 @@ async def resolve_bubble_text(
         profile=profile,
         context=context,
     )
-    # #region agent log
-    dbg(
-        "B",
-        "bubble_service.py:resolve_bubble_text",
-        "llm_result",
-        {"llm_ok": llm is not None, "mood": mood_result.mood},
-    )
-    # #endregion
     if llm:
         payload = {
             "bubble_text": llm.bubble_text,
@@ -109,21 +69,4 @@ async def resolve_bubble_text(
             "bubble",
             {"bubble_text": text, "mood": mood_result.mood, "source": "static"},
         )
-        # #region agent log
-        dbg(
-            "B",
-            "bubble_service.py:resolve_bubble_text",
-            "static_fallback_cached",
-            {"bubble_len": len(text), "mood": mood_result.mood},
-        )
-        # #endregion
-    else:
-        # #region agent log
-        dbg(
-            "B",
-            "bubble_service.py:resolve_bubble_text",
-            "static_fallback_not_cached",
-            {"bubble_len": len(text), "mood": mood_result.mood},
-        )
-        # #endregion
     return text

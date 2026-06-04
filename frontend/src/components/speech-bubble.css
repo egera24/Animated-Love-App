@@ -40,3 +40,8 @@
   line-height: 1.55;
   font-size: 1.05rem;
 }
+
+.speech-bubble--loading .speech-bubble__text {
+  color: var(--color-text-muted);
+  font-style: italic;
+}

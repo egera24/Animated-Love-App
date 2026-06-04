@@ -10,7 +10,6 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
-from app.debug_log import dbg
 from app.services.llm.schemas import BubbleLLMResponse
 from app.services.llm.usage import UsageTracker
 
@@ -204,37 +203,11 @@ async def generate_bubble(
     context: dict[str, Any],
 ) -> BubbleLLMResponse | None:
     settings = get_settings()
-    has_keys = settings.has_any_llm_key()
-    # #region agent log
-    dbg(
-        "C",
-        "router.py:generate_bubble",
-        "entry",
-        {
-            "has_keys": has_keys,
-            "mood": mood,
-            "groq_set": bool(settings.groq_api_key and str(settings.groq_api_key).strip()),
-            "gemini_set": bool(settings.gemini_api_key and str(settings.gemini_api_key).strip()),
-            "openrouter_set": bool(
-                settings.openrouter_api_key and str(settings.openrouter_api_key).strip()
-            ),
-        },
-    )
-    # #endregion
-    if not has_keys:
+    if not settings.has_any_llm_key():
         return None
 
     tracker = UsageTracker(db, daily_call_limit=settings.llm_daily_call_limit)
-    can_call = tracker.can_call()
-    # #region agent log
-    dbg(
-        "E",
-        "router.py:generate_bubble",
-        "usage_check",
-        {"can_call": can_call, "calls_today": tracker.total_calls_today()},
-    )
-    # #endregion
-    if not can_call:
+    if not tracker.can_call():
         logger.info("LLM daily call limit reached")
         return None
 
@@ -258,34 +231,11 @@ async def generate_bubble(
     async with httpx.AsyncClient() as client:
         for name, fn in providers:
             raw = await fn(client, settings, user_prompt)
-            # #region agent log
-            dbg(
-                "B",
-                "router.py:generate_bubble",
-                "provider_attempt",
-                {
-                    "provider": name,
-                    "raw_is_none": raw is None,
-                    "raw_len": len(raw) if raw else 0,
-                },
-            )
-            # #endregion
             if raw is None:
                 continue
             tracker.record(name, calls=1)
             parsed = _parse_bubble(raw, expected_mood=mood)
-            # #region agent log
-            dbg(
-                "B",
-                "router.py:generate_bubble",
-                "provider_parse",
-                {"provider": name, "parsed_ok": parsed is not None},
-            )
-            # #endregion
             if parsed:
                 return parsed
 
-    # #region agent log
-    dbg("B", "router.py:generate_bubble", "all_providers_failed", {})
-    # #endregion
     return None

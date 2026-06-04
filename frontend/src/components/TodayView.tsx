@@ -5,10 +5,11 @@ import "./speech-bubble.css";
 
 type Props = {
   data: TodayData;
+  bubbleLoading?: boolean;
   onHedgehogTap?: () => void;
 };
 
-export default function TodayView({ data, onHedgehogTap }: Props) {
+export default function TodayView({ data, bubbleLoading, onHedgehogTap }: Props) {
   return (
     <>
       <HedgehogStage
@@ -16,7 +17,12 @@ export default function TodayView({ data, onHedgehogTap }: Props) {
         name={data.hedgehog_name}
         onTap={onHedgehogTap}
       />
-      <SpeechBubble text={data.bubble_text} speaker={data.hedgehog_name} />
+      <SpeechBubble
+        key={data.bubble_text}
+        text={data.bubble_text}
+        speaker={data.hedgehog_name}
+        loading={bubbleLoading}
+      />
       {data.is_special_date && data.special_date_label && (
         <p className="special-badge">{data.special_date_label}</p>
       )}

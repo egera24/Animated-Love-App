@@ -3,11 +3,10 @@ from fastapi import APIRouter, Request
 from app.api.deps import require_auth
 from app.api.schemas import ContentSnippet, TodayResponse, WeatherInfo
 from app.config import load_profile
-from app.debug_log import dbg
-from app.services.content_cache import get_cached
 from app.services.mood import _today_in_tz
 from app.db.session import SessionLocal
 from app.services.bubble_service import resolve_bubble_text
+from app.services.content_cache import get_cached
 from app.services.content_modules import generate_module_content
 from app.services.mood import resolve_mood
 from app.services.weather import fetch_weather
@@ -61,20 +60,6 @@ async def get_today(request: Request):
             force_refresh=refresh_bubble,
         )
         content_date = _today_in_tz(profile).isoformat()
-        after_cache = get_cached(db, content_date, "bubble")
-        # #region agent log
-        dbg(
-            "D",
-            "today.py:get_today",
-            "response_bubble",
-            {
-                "bubble_len": len(bubble),
-                "bubble_prefix": bubble[:40],
-                "final_source": after_cache.get("source") if after_cache else None,
-                "refresh_bubble": refresh_bubble,
-            },
-        )
-        # #endregion
         poem = await _load_module_snippet(db, "poem", profile, content_date)
         book = await _load_module_snippet(db, "book", profile, content_date)
         movie = await _load_module_snippet(db, "movie", profile, content_date)
