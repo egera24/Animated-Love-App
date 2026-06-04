@@ -1,17 +1,19 @@
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.api.deps import require_auth
-from app.api.schemas import ContentSnippet, TodayResponse, WeatherInfo
+from app.api.schemas import BubbleRefreshResponse, ContentSnippet, TodayResponse, WeatherInfo
 from app.config import load_profile
-from app.services.mood import _today_in_tz
 from app.db.session import SessionLocal
 from app.services.bubble_service import resolve_bubble_text
 from app.services.content_cache import get_cached
 from app.services.content_modules import generate_module_content
-from app.services.mood import resolve_mood
+from app.services.mood import _today_in_tz, resolve_mood
 from app.services.weather import fetch_weather
 
 router = APIRouter(prefix="/api", tags=["today"])
+
+_NO_STORE = {"Cache-Control": "no-store"}
 
 
 def _snippet(module: str, cached: dict | None) -> ContentSnippet | None:
@@ -36,19 +38,11 @@ async def _load_module_snippet(db, module: str, profile: dict, content_date: str
     return _snippet(module, cached)
 
 
-@router.get("/today", response_model=TodayResponse)
-async def get_today(request: Request):
-    require_auth(request)
+async def _build_today_response(*, force_refresh_bubble: bool) -> TodayResponse:
     profile = load_profile()
     weather_data = await fetch_weather(profile)
     weather_mood = weather_data.get("mood_hint") if weather_data else None
-
     mood_result = resolve_mood(profile, weather_mood=weather_mood)
-    refresh_bubble = request.query_params.get("refresh_bubble", "").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
 
     db = SessionLocal()
     try:
@@ -57,7 +51,7 @@ async def get_today(request: Request):
             profile,
             mood_result,
             weather=weather_data,
-            force_refresh=refresh_bubble,
+            force_refresh=force_refresh_bubble,
         )
         content_date = _today_in_tz(profile).isoformat()
         poem = await _load_module_snippet(db, "poem", profile, content_date)
@@ -68,14 +62,11 @@ async def get_today(request: Request):
 
     hedgehog = profile.get("hedgehog", {})
     recipient = profile.get("recipient", {})
-
-    weather_info = None
-    if weather_data:
-        weather_info = WeatherInfo(**weather_data)
+    weather_info = WeatherInfo(**weather_data) if weather_data else None
 
     return TodayResponse(
         mood=mood_result.mood,
-        bubble_text=bubble,
+        bubble_text=bubble.text,
         hedgehog_name=hedgehog.get("name", "Fahéj"),
         recipient_name=recipient.get("name", "Edina"),
         is_birthday=mood_result.is_birthday,
@@ -86,4 +77,39 @@ async def get_today(request: Request):
         poem=poem,
         book_tip=book,
         movie_tip=movie,
+    )
+
+
+@router.get("/today")
+async def get_today(request: Request):
+    require_auth(request)
+    data = await _build_today_response(force_refresh_bubble=False)
+    return JSONResponse(content=data.model_dump(), headers=_NO_STORE)
+
+
+@router.post("/today/bubble/refresh", response_model=BubbleRefreshResponse)
+async def refresh_bubble(request: Request):
+    """New bubble on each call (Fahéj tap). POST avoids browser GET caching."""
+    require_auth(request)
+    profile = load_profile()
+    weather_data = await fetch_weather(profile)
+    weather_mood = weather_data.get("mood_hint") if weather_data else None
+    mood_result = resolve_mood(profile, weather_mood=weather_mood)
+
+    db = SessionLocal()
+    try:
+        bubble = await resolve_bubble_text(
+            db,
+            profile,
+            mood_result,
+            weather=weather_data,
+            force_refresh=True,
+        )
+    finally:
+        db.close()
+
+    return BubbleRefreshResponse(
+        bubble_text=bubble.text,
+        mood=mood_result.mood,
+        bubble_source=bubble.source,
     )

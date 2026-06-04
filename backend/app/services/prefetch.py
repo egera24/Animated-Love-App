@@ -39,6 +39,6 @@ async def run_prefetch(db: Session) -> dict[str, Any]:
     return {
         "ok": True,
         "mood": mood_result.mood,
-        "bubble_cached": bool(bubble),
+        "bubble_cached": bool(bubble.text),
         "modules": modules_done,
     }

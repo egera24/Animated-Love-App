@@ -3,6 +3,7 @@ import {
   checkAuth,
   fetchToday,
   logout,
+  refreshBubble,
   TodayData,
 } from "./api/client";
 import LoginPage from "./components/LoginPage";
@@ -18,18 +19,33 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [bubbleLoading, setBubbleLoading] = useState(false);
 
-  const loadToday = useCallback(async (refreshBubble = false) => {
+  const loadToday = useCallback(async () => {
     setError(null);
-    if (refreshBubble) setBubbleLoading(true);
     try {
-      const data = await fetchToday(refreshBubble);
+      const data = await fetchToday();
       setToday(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hiba.");
-    } finally {
-      if (refreshBubble) setBubbleLoading(false);
     }
   }, []);
+
+  const onHedgehogTap = useCallback(async () => {
+    if (!today) return;
+    setError(null);
+    setBubbleLoading(true);
+    try {
+      const fresh = await refreshBubble();
+      setToday({
+        ...today,
+        bubble_text: fresh.bubble_text,
+        mood: fresh.mood,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Hiba.");
+    } finally {
+      setBubbleLoading(false);
+    }
+  }, [today]);
 
   useEffect(() => {
     checkAuth()
@@ -95,7 +111,7 @@ export default function App() {
         <TodayView
           data={today}
           bubbleLoading={bubbleLoading}
-          onHedgehogTap={() => void loadToday(true)}
+          onHedgehogTap={() => void onHedgehogTap()}
         />
       )}
 

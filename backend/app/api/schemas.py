@@ -39,6 +39,12 @@ class TodayResponse(BaseModel):
     movie_tip: ContentSnippet | None = None
 
 
+class BubbleRefreshResponse(BaseModel):
+    bubble_text: str
+    mood: str
+    bubble_source: str
+
+
 class ContentModuleResponse(BaseModel):
     module: str
     text: str

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import secrets
+from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -9,6 +11,12 @@ from app.services.content_cache import get_cached, set_cached
 from app.services.fallbacks import build_bubble_text
 from app.services.llm.router import generate_bubble
 from app.services.mood import MoodResult
+
+
+@dataclass
+class BubbleResult:
+    text: str
+    source: str
 
 
 def _today_key(profile: dict[str, Any]) -> str:
@@ -24,19 +32,27 @@ async def resolve_bubble_text(
     *,
     weather: dict[str, Any] | None,
     force_refresh: bool = False,
-) -> str:
+) -> BubbleResult:
     content_date = _today_key(profile)
     cached = get_cached(db, content_date, "bubble")
     if not force_refresh and cached and cached.get("bubble_text"):
-        # Stale static cache blocks LLM after a single failed provider call — retry when keys exist.
         if cached.get("source") != "static" or not get_settings().has_any_llm_key():
-            return str(cached["bubble_text"])
+            return BubbleResult(
+                text=str(cached["bubble_text"]),
+                source=str(cached.get("source", "cache")),
+            )
 
     context = {
         "is_birthday": mood_result.is_birthday,
         "special_date_label": mood_result.special_date_label,
         "weather": weather,
         "interactive_refresh": force_refresh,
+        "previous_bubble": (
+            str(cached.get("bubble_text"))
+            if force_refresh and cached and cached.get("bubble_text")
+            else None
+        ),
+        "variation_id": secrets.token_hex(4) if force_refresh else None,
     }
 
     llm = await generate_bubble(
@@ -53,7 +69,7 @@ async def resolve_bubble_text(
             "source": "llm",
         }
         set_cached(db, content_date, "bubble", payload)
-        return llm.bubble_text
+        return BubbleResult(text=llm.bubble_text, source="llm")
 
     text = build_bubble_text(
         profile,
@@ -69,4 +85,5 @@ async def resolve_bubble_text(
             "bubble",
             {"bubble_text": text, "mood": mood_result.mood, "source": "static"},
         )
-    return text
+        return BubbleResult(text=text, source="static")
+    return BubbleResult(text=text, source="static_ephemeral")

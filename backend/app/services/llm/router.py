@@ -61,9 +61,12 @@ def _build_user_prompt(
     if interests:
         lines.append(f"Érdeklődések (utalhat rájuk finoman): {json.dumps(interests, ensure_ascii=False)}")
     if context.get("interactive_refresh"):
+        vid = context.get("variation_id") or "?"
         lines.append(
-            "Edina most rád kattintott — írj egy ÚJ, más szöveget, ne ismételd az előző buborékot."
+            f"Edina most rád kattintott (frissítés #{vid}) — kötelezően ÚJ szöveg, más szavakkal és megfoglalással."
         )
+        if prev := context.get("previous_bubble"):
+            lines.append(f"Az előző buborék szövege (NE ismételd, ne parafrázis ugyanazzal a kezdéssel): «{prev}»")
     lines.append("Írj 1–3 rövid mondatot a bubble_text mezőbe; időjárást említheted ha releváns.")
     return "\n".join(lines)
 
@@ -72,6 +75,8 @@ async def _call_groq(
     client: httpx.AsyncClient,
     settings: Settings,
     user_prompt: str,
+    *,
+    temperature: float = 0.8,
 ) -> str | None:
     if not settings.groq_api_key:
         return None
@@ -88,7 +93,7 @@ async def _call_groq(
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                "temperature": 0.8,
+                "temperature": temperature,
                 "max_tokens": 400,
             },
             timeout=30.0,
@@ -107,6 +112,8 @@ async def _call_gemini(
     client: httpx.AsyncClient,
     settings: Settings,
     user_prompt: str,
+    *,
+    temperature: float = 0.8,
 ) -> str | None:
     if not settings.gemini_api_key:
         return None
@@ -126,7 +133,7 @@ async def _call_gemini(
                         ],
                     }
                 ],
-                "generationConfig": {"temperature": 0.8, "maxOutputTokens": 400},
+                "generationConfig": {"temperature": temperature, "maxOutputTokens": 400},
             },
             timeout=30.0,
         )
@@ -148,6 +155,8 @@ async def _call_openrouter(
     client: httpx.AsyncClient,
     settings: Settings,
     user_prompt: str,
+    *,
+    temperature: float = 0.8,
 ) -> str | None:
     if not settings.openrouter_api_key:
         return None
@@ -166,7 +175,7 @@ async def _call_openrouter(
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                "temperature": 0.8,
+                "temperature": temperature,
                 "max_tokens": 400,
             },
             timeout=45.0,
@@ -222,6 +231,8 @@ async def generate_bubble(
         context={**context, "interests": profile.get("interests")},
     )
 
+    temperature = 1.0 if context.get("interactive_refresh") else 0.8
+
     providers = [
         ("groq", _call_groq),
         ("gemini", _call_gemini),
@@ -230,7 +241,7 @@ async def generate_bubble(
 
     async with httpx.AsyncClient() as client:
         for name, fn in providers:
-            raw = await fn(client, settings, user_prompt)
+            raw = await fn(client, settings, user_prompt, temperature=temperature)
             if raw is None:
                 continue
             tracker.record(name, calls=1)

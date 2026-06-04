@@ -80,9 +80,22 @@ export async function logout(): Promise<void> {
   await request("/api/auth/logout", { method: "POST" });
 }
 
-export async function fetchToday(refreshBubble = false): Promise<TodayData> {
-  const query = refreshBubble ? "?refresh_bubble=1" : "";
-  return request<TodayData>(`/api/today${query}`);
+export async function fetchToday(): Promise<TodayData> {
+  return request<TodayData>("/api/today", { cache: "no-store" });
+}
+
+export type BubbleRefresh = {
+  bubble_text: string;
+  mood: string;
+  bubble_source: string;
+};
+
+/** Fahéj tap — always generates a new bubble (POST, not cached by browser). */
+export async function refreshBubble(): Promise<BubbleRefresh> {
+  return request<BubbleRefresh>("/api/today/bubble/refresh", {
+    method: "POST",
+    cache: "no-store",
+  });
 }
 
 export async function fetchMedia(page = 1, limit = 20): Promise<MediaList> {
