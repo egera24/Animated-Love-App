@@ -46,7 +46,8 @@ class Settings(BaseSettings):
     enable_scheduler: bool = Field(default=True, alias="ENABLE_SCHEDULER")
 
     def has_any_llm_key(self) -> bool:
-        return bool(self.groq_api_key or self.gemini_api_key or self.openrouter_api_key)
+        keys = (self.groq_api_key, self.gemini_api_key, self.openrouter_api_key)
+        return any(k and str(k).strip() for k in keys)
 
 
 def get_settings() -> Settings:

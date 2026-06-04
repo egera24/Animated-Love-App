@@ -152,6 +152,12 @@ Production: `frontend/dist` mounted at `/` when folder exists (`main.py`).
 
 ---
 
+## Enable LLMs (operator)
+
+Keys are **not** in git. See [docs/LLM_SETUP.md](docs/LLM_SETUP.md). Quick path: `.env.llm.local` → `python scripts/apply_llm_keys.py` → restart backend → `scripts/clear-bubble-cache.ps1` → `scripts/verify-llm.ps1`.
+
+---
+
 ## Phase 1b — done locally · next: deploy
 
 1. ~~LLM router~~ — `backend/app/services/llm/router.py`; keys in `.env`; `LLM_DAILY_CALL_LIMIT`.

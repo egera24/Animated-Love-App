@@ -4,7 +4,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.config import load_profile
+from app.config import ROOT_DIR, load_profile
+from app.debug_log import dbg
 from app.services.content_cache import get_cached, set_cached
 from app.services.fallbacks import build_bubble_text
 from app.services.llm.router import generate_bubble
@@ -26,6 +27,20 @@ async def resolve_bubble_text(
 ) -> str:
     content_date = _today_key(profile)
     cached = get_cached(db, content_date, "bubble")
+    # #region agent log
+    dbg(
+        "A",
+        "bubble_service.py:resolve_bubble_text",
+        "cache_lookup",
+        {
+            "content_date": content_date,
+            "db_path": str(ROOT_DIR / "data" / "app.db"),
+            "cache_hit": bool(cached and cached.get("bubble_text")),
+            "cache_source": cached.get("source") if cached else None,
+            "bubble_len": len(str(cached.get("bubble_text", ""))) if cached else 0,
+        },
+    )
+    # #endregion
     if cached and cached.get("bubble_text"):
         return str(cached["bubble_text"])
 
@@ -41,6 +56,14 @@ async def resolve_bubble_text(
         profile=profile,
         context=context,
     )
+    # #region agent log
+    dbg(
+        "B",
+        "bubble_service.py:resolve_bubble_text",
+        "llm_result",
+        {"llm_ok": llm is not None, "mood": mood_result.mood},
+    )
+    # #endregion
     if llm:
         payload = {
             "bubble_text": llm.bubble_text,
@@ -64,4 +87,12 @@ async def resolve_bubble_text(
         "bubble",
         {"bubble_text": text, "mood": mood_result.mood, "source": "static"},
     )
+    # #region agent log
+    dbg(
+        "B",
+        "bubble_service.py:resolve_bubble_text",
+        "static_fallback_cached",
+        {"bubble_len": len(text), "mood": mood_result.mood},
+    )
+    # #endregion
     return text

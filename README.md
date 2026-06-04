@@ -65,8 +65,16 @@ Open [http://localhost:5173](http://localhost:5173) and log in with `APP_PASSWOR
 
 | File | Purpose |
 |------|---------|
-| `.env` | `APP_PASSWORD`, `SESSION_SECRET`, optional AI keys later |
+| `.env` | `APP_PASSWORD`, `SESSION_SECRET`, optional LLM keys |
 | `config/profile.yaml` | Edina's name, dates, cities, interests |
+
+### Enable AI bubbles (Groq + Gemini + OpenRouter)
+
+1. Create keys (see [docs/LLM_SETUP.md](docs/LLM_SETUP.md)).
+2. Run `.\scripts\configure-llm.ps1` or paste keys into `.env`.
+3. Restart backend, then `.\scripts\clear-bubble-cache.ps1`, then `.\scripts\verify-llm.ps1`.
+
+Without keys, bubbles use static Hungarian text in `data/fallbacks/messages_hu.json`.
 
 ## Production build
 
@@ -86,11 +94,11 @@ The API serves `frontend/dist` when present.
 3. Set env vars: `APP_PASSWORD`, `SESSION_SECRET`, `SESSION` HTTPS cookies.
 4. Add a **cron job** calling `POST /internal/prefetch` with header `X-Prefetch-Secret` (set `PREFETCH_SECRET` in `.env`).
 
-## Phase 1b (next)
+## Phase 1b
 
-- Multi-provider free LLM (Groq → Gemini → OpenRouter)
-- Daily poems, book/movie tips from interests
-- News RSS summaries
+- Multi-provider LLM for bubbles (Groq → Gemini → OpenRouter) — see [docs/LLM_SETUP.md](docs/LLM_SETUP.md)
+- Daily poem / book / movie cards from `data/content/` (enable in `profile.yaml`)
+- News RSS summaries (planned)
 
 ## Sounds
 
