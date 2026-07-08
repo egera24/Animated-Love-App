@@ -1,7 +1,38 @@
 from __future__ import annotations
 
+import json
+import sys
+import time
 from pathlib import Path
 from typing import Any
+
+# #region agent log
+try:
+    _dbg = Path(__file__).resolve().parents[2] / "debug-ad283c.log"
+    _dbg.write_text(
+        json.dumps(
+            {
+                "sessionId": "ad283c",
+                "runId": "pre-fix",
+                "hypothesisId": "H2",
+                "location": "config.py:import",
+                "message": "python environment before pydantic_settings import",
+                "data": {
+                    "executable": sys.executable,
+                    "prefix": sys.prefix,
+                    "base_prefix": getattr(sys, "base_prefix", None),
+                    "in_venv": sys.prefix != getattr(sys, "base_prefix", sys.prefix),
+                    "version": sys.version,
+                },
+                "timestamp": int(time.time() * 1000),
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+except Exception:
+    pass
+# #endregion
 
 import yaml
 from pydantic import Field

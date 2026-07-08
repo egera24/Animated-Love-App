@@ -26,11 +26,17 @@ Copy profile if needed (a `config/profile.yaml` is already included for Edina):
 copy config\profile.example.yaml config\profile.yaml
 ```
 
-Run API:
+Run API (venv must be active — see step 1):
 
 ```powershell
 cd backend
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Or from the project root, use the helper script (activates `.venv` automatically):
+
+```powershell
+.\scripts\start-backend.ps1
 ```
 
 ### 2. Frontend
