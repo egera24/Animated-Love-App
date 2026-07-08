@@ -1,21 +1,27 @@
 import "./hedgehog.css";
+import { Expression } from "../character/types";
 
 type Props = {
   mood: string;
+  expression?: Expression;
+  isSpeaking?: boolean;
   name?: string;
   onClick?: () => void;
 };
 
 export default function HedgehogCharacter({
   mood,
+  expression = "neutral",
+  isSpeaking = false,
   name = "Fahéj",
   onClick,
 }: Props) {
   return (
     <div className="hedgehog-stage">
       <svg
-        className="hedgehog-svg"
+        className={`hedgehog-svg${isSpeaking ? " is-speaking" : ""}`}
         data-mood={mood}
+        data-expression={expression}
         viewBox="0 0 240 220"
         role="img"
         aria-label={`${name}, a süni`}

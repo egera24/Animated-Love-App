@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -12,6 +12,8 @@ class MoodResult:
     is_birthday: bool
     is_special_date: bool
     special_date_label: str | None
+    behavior: str | None = None
+    topic_hints: list[str] = field(default_factory=list)
 
 
 def _today_in_tz(profile: dict[str, Any]) -> date:
@@ -37,6 +39,7 @@ def resolve_mood(profile: dict[str, Any], weather_mood: str | None = None) -> Mo
             is_birthday=True,
             is_special_date=True,
             special_date_label="Születésnap",
+            behavior="Ünnepelj, legyél különösen figyelmes és vidám.",
         )
 
     special_dates = profile.get("special_dates", [])
@@ -48,6 +51,8 @@ def resolve_mood(profile: dict[str, Any], weather_mood: str | None = None) -> Mo
                 is_birthday=False,
                 is_special_date=True,
                 special_date_label=entry.get("label_hu"),
+                behavior=entry.get("behavior"),
+                topic_hints=list(entry.get("topic_hints", []) or []),
             )
 
     if weather_mood:

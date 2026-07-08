@@ -6,11 +6,14 @@ import {
   refreshBubble,
   TodayData,
 } from "./api/client";
+import CharacterSwitcher from "./character/CharacterSwitcher";
+import { useCharacterSelection } from "./character/useCharacterSelection";
+import ChatView from "./components/ChatView";
 import LoginPage from "./components/LoginPage";
 import PhotoGallery from "./components/PhotoGallery";
 import TodayView from "./components/TodayView";
 
-type Tab = "today" | "photos";
+type Tab = "today" | "chat" | "photos";
 
 export default function App() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -18,6 +21,7 @@ export default function App() {
   const [today, setToday] = useState<TodayData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bubbleLoading, setBubbleLoading] = useState(false);
+  const [character, setCharacter] = useCharacterSelection();
 
   const loadToday = useCallback(async () => {
     setError(null);
@@ -39,6 +43,7 @@ export default function App() {
         ...today,
         bubble_text: fresh.bubble_text,
         mood: fresh.mood,
+        expression: fresh.expression,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hiba.");
@@ -98,6 +103,13 @@ export default function App() {
         </button>
         <button
           type="button"
+          className={tab === "chat" ? "active" : ""}
+          onClick={() => setTab("chat")}
+        >
+          Beszélgetés
+        </button>
+        <button
+          type="button"
           className={tab === "photos" ? "active" : ""}
           onClick={() => setTab("photos")}
         >
@@ -105,11 +117,14 @@ export default function App() {
         </button>
       </nav>
 
+      <CharacterSwitcher value={character} onChange={setCharacter} />
+
       {error && <p className="error-text">{error}</p>}
 
       {tab === "today" && today && (
         <TodayView
           data={today}
+          characterId={character}
           bubbleLoading={bubbleLoading}
           onHedgehogTap={() => void onHedgehogTap()}
         />
@@ -117,6 +132,15 @@ export default function App() {
 
       {tab === "today" && !today && !error && (
         <p className="muted">Fahéj ébredezik…</p>
+      )}
+
+      {tab === "chat" && (
+        <ChatView
+          characterId={character}
+          characterName={
+            character === "hedgehog" ? today?.hedgehog_name ?? "Fahéj" : "Ő"
+          }
+        />
       )}
 
       {tab === "photos" && <PhotoGallery />}
@@ -169,6 +193,24 @@ export default function App() {
           margin: 0;
           white-space: pre-line;
           line-height: 1.5;
+        }
+        .content-links {
+          margin: 0.6rem 0 0;
+          padding-left: 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+        }
+        .content-links li {
+          font-size: 0.9rem;
+          line-height: 1.35;
+        }
+        .content-links a {
+          color: var(--color-accent-deep);
+          text-decoration: none;
+        }
+        .content-links a:hover {
+          text-decoration: underline;
         }
       `}</style>
     </div>

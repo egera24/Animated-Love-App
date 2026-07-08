@@ -1,11 +1,18 @@
+export type LinkItem = {
+  title: string;
+  url: string | null;
+};
+
 export type ContentSnippet = {
   module: string;
   text: string;
   title: string | null;
+  items?: LinkItem[] | null;
 };
 
 export type TodayData = {
   mood: string;
+  expression: string;
   bubble_text: string;
   hedgehog_name: string;
   recipient_name: string;
@@ -23,6 +30,8 @@ export type TodayData = {
   poem: ContentSnippet | null;
   book_tip: ContentSnippet | null;
   movie_tip: ContentSnippet | null;
+  news: ContentSnippet | null;
+  health: ContentSnippet | null;
 };
 
 export type MediaItem = {
@@ -87,6 +96,7 @@ export async function fetchToday(): Promise<TodayData> {
 export type BubbleRefresh = {
   bubble_text: string;
   mood: string;
+  expression: string;
   bubble_source: string;
 };
 
@@ -95,6 +105,46 @@ export async function refreshBubble(): Promise<BubbleRefresh> {
   return request<BubbleRefresh>("/api/today/bubble/refresh", {
     method: "POST",
     cache: "no-store",
+  });
+}
+
+export type ChatReply = {
+  reply: string;
+  mood: string;
+  expression: string;
+  source: string;
+};
+
+export type ChatHistoryItem = {
+  role: "user" | "assistant";
+  content: string;
+  expression: string | null;
+  created_at: string;
+};
+
+export async function sendChat(
+  message: string,
+  characterId: string
+): Promise<ChatReply> {
+  return request<ChatReply>("/api/chat", {
+    method: "POST",
+    cache: "no-store",
+    body: JSON.stringify({ message, character_id: characterId }),
+  });
+}
+
+export async function fetchChatHistory(
+  characterId: string
+): Promise<ChatHistoryItem[]> {
+  const data = await request<{ items: ChatHistoryItem[] }>(
+    `/api/chat/history?character_id=${encodeURIComponent(characterId)}`
+  );
+  return data.items;
+}
+
+export async function clearChatHistory(characterId: string): Promise<void> {
+  await request(`/api/chat/history?character_id=${encodeURIComponent(characterId)}`, {
+    method: "DELETE",
   });
 }
 

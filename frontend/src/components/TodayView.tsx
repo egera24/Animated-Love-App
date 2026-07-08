@@ -1,19 +1,29 @@
 import { TodayData } from "../api/client";
-import HedgehogStage from "../hedgehog/HedgehogStage";
+import Character from "../character/Character";
+import { CharacterId, Expression } from "../character/types";
 import SpeechBubble from "./SpeechBubble";
 import "./speech-bubble.css";
 
 type Props = {
   data: TodayData;
+  characterId: CharacterId;
   bubbleLoading?: boolean;
   onHedgehogTap?: () => void;
 };
 
-export default function TodayView({ data, bubbleLoading, onHedgehogTap }: Props) {
+export default function TodayView({
+  data,
+  characterId,
+  bubbleLoading,
+  onHedgehogTap,
+}: Props) {
   return (
     <>
-      <HedgehogStage
+      <Character
+        characterId={characterId}
         mood={data.mood}
+        expression={data.expression as Expression}
+        isSpeaking={bubbleLoading}
         name={data.hedgehog_name}
         onTap={onHedgehogTap}
       />
@@ -54,6 +64,50 @@ export default function TodayView({ data, bubbleLoading, onHedgehogTap }: Props)
         <div className="content-card">
           <h3>{data.movie_tip.title ?? "Film ajánló"}</h3>
           <p className="content-card-body">{data.movie_tip.text}</p>
+        </div>
+      )}
+
+      {data.news && (
+        <div className="content-card">
+          <h3>{data.news.title ?? "Mai hírek"}</h3>
+          <p className="content-card-body">{data.news.text}</p>
+          {data.news.items && data.news.items.length > 0 && (
+            <ul className="content-links">
+              {data.news.items.map((it, i) => (
+                <li key={i}>
+                  {it.url ? (
+                    <a href={it.url} target="_blank" rel="noreferrer">
+                      {it.title}
+                    </a>
+                  ) : (
+                    it.title
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {data.health && (
+        <div className="content-card">
+          <h3>{data.health.title ?? "Egészség"}</h3>
+          <p className="content-card-body">{data.health.text}</p>
+          {data.health.items && data.health.items.length > 0 && (
+            <ul className="content-links">
+              {data.health.items.map((it, i) => (
+                <li key={i}>
+                  {it.url ? (
+                    <a href={it.url} target="_blank" rel="noreferrer">
+                      {it.title}
+                    </a>
+                  ) : (
+                    it.title
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </>

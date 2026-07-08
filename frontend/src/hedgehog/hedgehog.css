@@ -47,6 +47,36 @@
   animation: hog-breathe 4s ease-in-out infinite;
 }
 
+.hedgehog-svg[data-mood="melancholy"] {
+  animation: hog-sway 5s ease-in-out infinite;
+}
+
+.hedgehog-svg[data-mood="melancholy"] .hog-face {
+  transform: translateY(2px);
+}
+
+.hedgehog-svg[data-mood="comfort"] .hog-body {
+  animation: hog-breathe 5s ease-in-out infinite;
+}
+
+/* Expression tweaks — semantic layer that the proper figure will use fully. */
+.hedgehog-svg[data-expression="melancholy"] .hog-eyes-open {
+  opacity: 0.85;
+}
+
+.hedgehog-svg[data-expression="celebrate"] .hog-sparkles {
+  opacity: 1;
+  animation: sparkle 1.2s ease-in-out infinite;
+}
+
+.hedgehog-svg.is-speaking .hog-nose {
+  animation: nose-sniff 0.45s ease-in-out infinite;
+}
+
+.hedgehog-svg.is-speaking .hog-face {
+  animation: hog-talk 0.5s ease-in-out infinite;
+}
+
 .hedgehog-svg .hog-quills {
   transform-origin: center bottom;
 }
@@ -126,6 +156,26 @@
   50% {
     opacity: 1;
     transform: scale(1.1);
+  }
+}
+
+@keyframes hog-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg) translateY(1px);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-1px);
+  }
+}
+
+@keyframes hog-talk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(1.2px);
   }
 }
 

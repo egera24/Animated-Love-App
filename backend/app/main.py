@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.api.routes import auth, content, health, internal, media, today
+from app.api.routes import auth, chat, content, health, internal, media, today
 from app.config import ROOT_DIR, get_settings
 from app.db.session import init_db
 from app.scheduler import start_scheduler, stop_scheduler
@@ -56,6 +56,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(today.router)
+app.include_router(chat.router)
 app.include_router(content.router)
 app.include_router(media.router)
 app.include_router(internal.router)

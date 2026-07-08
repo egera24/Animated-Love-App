@@ -1,0 +1,28 @@
+# Hand-edited knowledge about Edina. Copy this file to `edina.yaml` (gitignored)
+# and extend it over time. Everything here is fed into the companion's chat
+# context so replies stay personal. Keep entries short and factual.
+#
+# Structure is free-form: top-level keys become labelled groups, and list items
+# or values are turned into "- key: value" lines in the prompt.
+
+people:
+  - "Férje: (a te neved) — a legfontosabb ember az életében"
+  - "Édesapja: elhunyt, gyengéden, tisztelettel emlékezzünk rá"
+
+likes:
+  - "meleg tea esős napokon"
+  - "vígjátékok és TLC-stílusú valóságshow-k"
+  - "fantasy: Gyűrűk Ura, Harry Potter"
+
+dislikes:
+  - "korai ébresztő"
+
+health:
+  - "1-es típusú cukorbeteg (T1D) — támogató hangnem, sosem orvosi tanács"
+
+ongoing_threads:
+  # Aktuális témák, amikre Fahéj visszakérdezhet
+  - "example: új sorozatot kezdett nézni"
+
+notes:
+  - "Szereti, ha megkérdezik, hogy telt a napja"

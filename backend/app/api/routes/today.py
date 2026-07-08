@@ -2,12 +2,20 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.api.deps import require_auth
-from app.api.schemas import BubbleRefreshResponse, ContentSnippet, TodayResponse, WeatherInfo
+from app.api.schemas import (
+    BubbleRefreshResponse,
+    ContentSnippet,
+    LinkItem,
+    TodayResponse,
+    WeatherInfo,
+)
 from app.config import load_profile
 from app.db.session import SessionLocal
 from app.services.bubble_service import resolve_bubble_text
 from app.services.content_cache import get_cached
 from app.services.content_modules import generate_module_content
+from app.services.expression import mood_to_expression
+from app.services.feeds import FEED_MODULES, generate_feed_digest
 from app.services.mood import _today_in_tz, resolve_mood
 from app.services.weather import fetch_weather
 
@@ -19,10 +27,19 @@ _NO_STORE = {"Cache-Control": "no-store"}
 def _snippet(module: str, cached: dict | None) -> ContentSnippet | None:
     if not cached or not cached.get("text"):
         return None
+    raw_items = cached.get("items")
+    items = None
+    if isinstance(raw_items, list) and raw_items:
+        items = [
+            LinkItem(title=str(i.get("title", "")), url=i.get("url"))
+            for i in raw_items
+            if isinstance(i, dict) and i.get("title")
+        ]
     return ContentSnippet(
         module=module,
         text=str(cached["text"]),
         title=cached.get("title"),
+        items=items,
     )
 
 
@@ -34,7 +51,10 @@ async def _load_module_snippet(db, module: str, profile: dict, content_date: str
         return None
     cached = get_cached(db, content_date, module)
     if not cached:
-        cached = await generate_module_content(db, module, profile)
+        if module in FEED_MODULES:
+            cached = await generate_feed_digest(db, module, profile)
+        else:
+            cached = await generate_module_content(db, module, profile)
     return _snippet(module, cached)
 
 
@@ -57,6 +77,8 @@ async def _build_today_response(*, force_refresh_bubble: bool) -> TodayResponse:
         poem = await _load_module_snippet(db, "poem", profile, content_date)
         book = await _load_module_snippet(db, "book", profile, content_date)
         movie = await _load_module_snippet(db, "movie", profile, content_date)
+        news = await _load_module_snippet(db, "news", profile, content_date)
+        health = await _load_module_snippet(db, "health", profile, content_date)
     finally:
         db.close()
 
@@ -66,6 +88,7 @@ async def _build_today_response(*, force_refresh_bubble: bool) -> TodayResponse:
 
     return TodayResponse(
         mood=mood_result.mood,
+        expression=mood_to_expression(mood_result.mood),
         bubble_text=bubble.text,
         hedgehog_name=hedgehog.get("name", "Fahéj"),
         recipient_name=recipient.get("name", "Edina"),
@@ -77,6 +100,8 @@ async def _build_today_response(*, force_refresh_bubble: bool) -> TodayResponse:
         poem=poem,
         book_tip=book,
         movie_tip=movie,
+        news=news,
+        health=health,
     )
 
 
@@ -111,5 +136,6 @@ async def refresh_bubble(request: Request):
     return BubbleRefreshResponse(
         bubble_text=bubble.text,
         mood=mood_result.mood,
+        expression=mood_to_expression(mood_result.mood),
         bubble_source=bubble.source,
     )

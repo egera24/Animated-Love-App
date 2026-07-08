@@ -42,6 +42,8 @@ class Settings(BaseSettings):
         alias="OPENROUTER_MODEL",
     )
     llm_daily_call_limit: int = Field(default=50, alias="LLM_DAILY_CALL_LIMIT")
+    llm_chat_daily_call_limit: int = Field(default=300, alias="LLM_CHAT_DAILY_CALL_LIMIT")
+    chat_history_turns: int = Field(default=12, alias="CHAT_HISTORY_TURNS")
     prefetch_secret: str | None = Field(default=None, alias="PREFETCH_SECRET")
     enable_scheduler: bool = Field(default=True, alias="ENABLE_SCHEDULER")
 

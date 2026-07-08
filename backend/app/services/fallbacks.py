@@ -32,6 +32,16 @@ def _default_messages() -> dict[str, list[str]]:
             "Esik odakint? Akkor bevágok a pihébe — te is burkolózz be!",
             "Ilyen időben a legjobb: meleg takaró, tea, és egy kis TLC… sorozat.",
         ],
+        "melancholy": [
+            "Kicsit borongós ma az ég… de tudod mit? Én itt vagyok, és ez már fél siker.",
+            "Szürke idő van, Edina. Bújjunk be egy meleg teához, és meséljünk valami szépet.",
+            "Ilyenkor a tüskéim is lekonyulnak egy kicsit — de egy jó film mindent megold.",
+        ],
+        "comfort": [
+            "Itt vagyok veled, Edina. Ha van kedved, meséljünk valami szépet — én figyelek.",
+            "Ma egy ölelésnyi közelebb húzódom hozzád. Jó emlékek, egy kis tea?",
+            "Bármi is van, ma extra puha vagyok. Mondd, mi tenne mosolygóssá?",
+        ],
         "sleepy": [
             "Hó van? Én ilyenkor extra gömbölyűre állítom a tüskéimet.",
             "Csendes, szürke nap — tökéletes egy szundira.",

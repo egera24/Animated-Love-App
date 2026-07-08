@@ -7,6 +7,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 config/profile.yaml
+data/knowledge/edina.yaml
 data/media/*
 !data/media/.gitkeep
 backend/.coverage

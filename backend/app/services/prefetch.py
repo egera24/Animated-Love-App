@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.config import load_profile
 from app.services.bubble_service import resolve_bubble_text
-from app.services.content_modules import generate_module_content, get_enabled_modules
+from app.services.content_modules import (
+    _module_enabled,
+    generate_module_content,
+    get_enabled_modules,
+)
+from app.services.feeds import FEED_MODULES, generate_feed_digest
 from app.services.mood import resolve_mood
 from app.services.weather import fetch_weather
 
@@ -34,6 +39,17 @@ async def run_prefetch(db: Session) -> dict[str, Any]:
             modules_done[module] = "ok" if result else "empty"
         except Exception as e:
             logger.exception("Prefetch module %s failed", module)
+            modules_done[module] = f"error: {e}"
+
+    modules_cfg = profile.get("modules_enabled", {})
+    for module in FEED_MODULES:
+        if not _module_enabled(modules_cfg, module):
+            continue
+        try:
+            result = await generate_feed_digest(db, module, profile)
+            modules_done[module] = "ok" if result else "empty"
+        except Exception as e:
+            logger.exception("Prefetch feed %s failed", module)
             modules_done[module] = f"error: {e}"
 
     return {

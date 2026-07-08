@@ -52,6 +52,12 @@ def _build_user_prompt(
         lines.append("Ma Edina születésnapja — ünnepi hangnem.")
     elif context.get("special_date_label"):
         lines.append(f"Különleges nap: {context['special_date_label']}")
+    if behavior := context.get("behavior"):
+        lines.append(f"Viselkedési útmutató: {behavior}")
+    if topic_hints := context.get("topic_hints"):
+        lines.append(
+            f"Ajánlható témák (finoman): {json.dumps(topic_hints, ensure_ascii=False)}"
+        )
     if weather := context.get("weather"):
         lines.append(
             f"Időjárás ({weather.get('city', 'Szeged')}): "
@@ -202,6 +208,165 @@ def _parse_bubble(raw: str | None, expected_mood: str) -> BubbleLLMResponse | No
     except (json.JSONDecodeError, ValidationError) as e:
         logger.warning("LLM JSON parse failed: %s", e)
         return None
+
+
+async def _chat_groq(
+    client: httpx.AsyncClient,
+    settings: Settings,
+    system_prompt: str,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float,
+) -> str | None:
+    if not settings.groq_api_key:
+        return None
+    try:
+        r = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {settings.groq_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": settings.groq_model,
+                "messages": [{"role": "system", "content": system_prompt}, *messages],
+                "temperature": temperature,
+                "max_tokens": 600,
+            },
+            timeout=30.0,
+        )
+        if r.status_code in (401, 403, 429) or r.status_code >= 500:
+            logger.warning("Groq chat HTTP %s", r.status_code)
+            return None
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        logger.warning("Groq chat error: %s", e)
+        return None
+
+
+async def _chat_gemini(
+    client: httpx.AsyncClient,
+    settings: Settings,
+    system_prompt: str,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float,
+) -> str | None:
+    if not settings.gemini_api_key:
+        return None
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{settings.gemini_model}:generateContent"
+    )
+    contents = [
+        {
+            "role": "user" if m["role"] == "user" else "model",
+            "parts": [{"text": m["content"]}],
+        }
+        for m in messages
+    ]
+    try:
+        r = await client.post(
+            url,
+            params={"key": settings.gemini_api_key},
+            json={
+                "systemInstruction": {"parts": [{"text": system_prompt}]},
+                "contents": contents,
+                "generationConfig": {"temperature": temperature, "maxOutputTokens": 600},
+            },
+            timeout=30.0,
+        )
+        if r.status_code in (401, 403, 429) or r.status_code >= 500:
+            logger.warning("Gemini chat HTTP %s", r.status_code)
+            return None
+        r.raise_for_status()
+        data = r.json()
+        parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        if not parts:
+            return None
+        return parts[0].get("text", "")
+    except Exception as e:
+        logger.warning("Gemini chat error: %s", e)
+        return None
+
+
+async def _chat_openrouter(
+    client: httpx.AsyncClient,
+    settings: Settings,
+    system_prompt: str,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float,
+) -> str | None:
+    if not settings.openrouter_api_key:
+        return None
+    try:
+        r = await client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {settings.openrouter_api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://fahej.local",
+                "X-Title": "Fahéj App",
+            },
+            json={
+                "model": settings.openrouter_model,
+                "messages": [{"role": "system", "content": system_prompt}, *messages],
+                "temperature": temperature,
+                "max_tokens": 600,
+            },
+            timeout=45.0,
+        )
+        if r.status_code in (401, 403, 429) or r.status_code >= 500:
+            logger.warning("OpenRouter chat HTTP %s", r.status_code)
+            return None
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        logger.warning("OpenRouter chat error: %s", e)
+        return None
+
+
+async def generate_chat_reply(
+    db: Session,
+    *,
+    system_prompt: str,
+    messages: list[dict[str, str]],
+    temperature: float = 0.9,
+) -> str | None:
+    """Multi-turn conversational reply. Shares the provider fallback chain with
+    bubbles but has its own daily budget (category="chat")."""
+    settings = get_settings()
+    if not settings.has_any_llm_key():
+        return None
+
+    tracker = UsageTracker(
+        db,
+        daily_call_limit=settings.llm_chat_daily_call_limit,
+        category="chat",
+    )
+    if not tracker.can_call():
+        logger.info("LLM chat daily call limit reached")
+        return None
+
+    providers = [
+        ("groq", _chat_groq),
+        ("gemini", _chat_gemini),
+        ("openrouter", _chat_openrouter),
+    ]
+
+    async with httpx.AsyncClient() as client:
+        for name, fn in providers:
+            raw = await fn(client, settings, system_prompt, messages, temperature=temperature)
+            if raw is None:
+                continue
+            tracker.record(name, calls=1)
+            text = raw.strip()
+            if text:
+                return text
+
+    return None
 
 
 async def generate_bubble(

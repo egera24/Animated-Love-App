@@ -30,12 +30,15 @@ WMO_DESCRIPTIONS_HU: dict[int, str] = {
 
 
 def weather_to_mood(code: int) -> str:
+    # Clear / mostly clear -> upbeat
     if code in (0, 1):
         return "happy"
-    if code in (61, 63, 65, 80, 81, 82, 95):
-        return "cozy"
+    # Snow -> cozy, quiet
     if code in (71, 73, 75):
-        return "sleepy"
+        return "cozy"
+    # Grey, foggy, rainy or stormy -> melancholy ("bad weather" per design)
+    if code in (3, 45, 48, 51, 53, 55, 61, 63, 65, 80, 81, 82, 95):
+        return "melancholy"
     return "idle"
 
 

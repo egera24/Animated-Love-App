@@ -7,6 +7,12 @@ hedgehog:
   personality: playful, humorous
   default_language: hu
 
+# Optional second character: an avatar of you. Rendering is a placeholder for now
+# (see frontend/src/character/). The proper animated figure is a later phase.
+self_avatar:
+  name: "Én"
+  personality: warm, caring, a little witty
+
 locations:
   timezone: Europe/Budapest
   weather_primary: Szeged
@@ -18,9 +24,23 @@ special_dates:
   - date: "11-12"
     label_hu: "Esküvői évforduló"
     mood: celebrate
+    behavior: "Emlékezz meg gyengéden az évfordulóról, legyél romantikus és meleg."
   - date: "08-19"
     label_hu: "Eljegyzési évforduló"
     mood: happy
+    behavior: "Idézd fel a szép pillanatot, legyél derűs."
+  # Édesapja emléknapja — ezen a napon Fahéj csevegős, vigasztaló, és vidám
+  # témákat ajánl. Állítsd be a valódi dátumot (MM-DD formátumban).
+  - date: "01-01"   # TODO: állítsd be Edina édesapja emléknapjának valós dátumát
+    label_hu: "Emléknap"
+    mood: comfort
+    behavior: >-
+      Legyél különösen figyelmes és csevegős. Ne erőltesd a témát, de ha érezni
+      a hiányt, gyengéden terelj vidám, szép emlékek és kedves témák felé.
+    topic_hints:
+      - "kedves közös emlékek"
+      - "vicces történetek"
+      - "apró örömök a mában"
 
 interests:
   fantasy:
@@ -32,14 +52,33 @@ interests:
   series:
     - "TLC reality"
 
+# Health context used to personalise health/news content and chat tone.
+health:
+  conditions:
+    - "1-es típusú cukorbetegség (T1D)"
+  topics_of_interest:
+    - "GLP-1"
+    - "1-es típusú cukorbetegség"
+    - "inzulin"
+
 content:
   default_language: hu
+
+# RSS sources for the auto-fetched daily digest (Phase 4). Any of these can be
+# edited/added over time. Health feeds are informational, not medical advice.
+feeds:
+  news:
+    - "https://feeds.bbci.co.uk/news/world/rss.xml"
+  health:
+    - "https://www.medicalnewstoday.com/rss/diabetes.xml"
 
 modules_enabled:
   photos: true
   weather: true
   birthday: true
+  chat: true     # two-way conversation tab
   poem: false    # set true for daily poem card on Ma tab
   book: false    # set true for daily book tip
   movie: false   # set true for daily movie tip
-  news: false
+  news: false    # set true to show the daily news digest card
+  health: false  # set true to show the daily health-findings card

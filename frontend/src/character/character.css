@@ -1,0 +1,80 @@
+.character-switcher {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.character-switcher button {
+  padding: 0.3rem 0.9rem;
+  border: 2px solid var(--color-bubble-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.character-switcher button.active {
+  background: var(--color-honey);
+  border-color: var(--color-honey-dark);
+  color: #fff;
+}
+
+.self-avatar-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+  margin: 0.5rem 0 1rem;
+}
+
+.self-avatar {
+  position: relative;
+  width: min(220px, 70vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px dashed var(--color-bubble-border);
+  background: radial-gradient(circle at 50% 40%, var(--color-bg-soft), var(--color-surface));
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.3s ease;
+}
+
+.self-avatar:hover {
+  transform: scale(1.02);
+}
+
+.self-avatar.is-speaking {
+  animation: self-nod 1.2s ease-in-out infinite;
+}
+
+.self-avatar__face {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.self-avatar__badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@keyframes self-nod {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

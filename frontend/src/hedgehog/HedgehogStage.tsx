@@ -1,14 +1,23 @@
 import { useEffect, useRef } from "react";
+import { Expression } from "../character/types";
 import HedgehogCharacter from "./HedgehogCharacter";
 import { playMoodSound } from "./hedgehogSounds";
 
 type Props = {
   mood: string;
-  name: string;
+  name?: string;
+  expression?: Expression;
+  isSpeaking?: boolean;
   onTap?: () => void;
 };
 
-export default function HedgehogStage({ mood, name, onTap }: Props) {
+export default function HedgehogStage({
+  mood,
+  name = "Fahéj",
+  expression = "neutral",
+  isSpeaking = false,
+  onTap,
+}: Props) {
   const prevMood = useRef<string | null>(null);
 
   useEffect(() => {
@@ -18,5 +27,13 @@ export default function HedgehogStage({ mood, name, onTap }: Props) {
     prevMood.current = mood;
   }, [mood]);
 
-  return <HedgehogCharacter mood={mood} name={name} onClick={onTap} />;
+  return (
+    <HedgehogCharacter
+      mood={mood}
+      name={name}
+      expression={expression}
+      isSpeaking={isSpeaking}
+      onClick={onTap}
+    />
+  );
 }

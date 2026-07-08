@@ -45,6 +45,8 @@ async def resolve_bubble_text(
     context = {
         "is_birthday": mood_result.is_birthday,
         "special_date_label": mood_result.special_date_label,
+        "behavior": mood_result.behavior,
+        "topic_hints": mood_result.topic_hints,
         "weather": weather,
         "interactive_refresh": force_refresh,
         "previous_bubble": (
