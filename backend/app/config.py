@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +48,80 @@ CITY_COORDS: dict[str, tuple[float, float]] = {
     "Szeged": (46.253, 20.148),
     "Budapest": (47.4979, 19.0402),
 }
+
+logger = logging.getLogger(__name__)
+
+LLM_CATALOG_PATH = CONFIG_DIR / "llm_models.yaml"
+LLM_CATALOG_EXAMPLE_PATH = CONFIG_DIR / "llm_models.example.yaml"
+
+_PROVIDER_KEY_ATTR: dict[str, str] = {
+    "groq": "groq_api_key",
+    "gemini": "gemini_api_key",
+    "openrouter": "openrouter_api_key",
+}
+
+
+@dataclass(frozen=True)
+class LlmProviderEntry:
+    name: str
+    models: list[str]
+
+
+def _provider_has_key(settings: Settings, provider: str) -> bool:
+    attr = _PROVIDER_KEY_ATTR.get(provider)
+    if not attr:
+        return False
+    key = getattr(settings, attr, None)
+    return bool(key and str(key).strip())
+
+
+def _parse_catalog_yaml(data: dict[str, Any]) -> list[LlmProviderEntry]:
+    providers_raw = data.get("providers")
+    if not isinstance(providers_raw, dict):
+        return []
+    entries: list[LlmProviderEntry] = []
+    for name, cfg in providers_raw.items():
+        if not isinstance(cfg, dict):
+            continue
+        models_raw = cfg.get("models")
+        if not isinstance(models_raw, list):
+            continue
+        models = [str(m).strip() for m in models_raw if m and str(m).strip()]
+        if models:
+            entries.append(LlmProviderEntry(name=str(name), models=models))
+    return entries
+
+
+def _legacy_catalog_from_env(settings: Settings) -> list[LlmProviderEntry]:
+    """Single-model catalog from legacy GROQ_MODEL / GEMINI_MODEL / OPENROUTER_MODEL."""
+    entries: list[LlmProviderEntry] = []
+    if _provider_has_key(settings, "groq"):
+        entries.append(LlmProviderEntry(name="groq", models=[settings.groq_model]))
+    if _provider_has_key(settings, "gemini"):
+        entries.append(LlmProviderEntry(name="gemini", models=[settings.gemini_model]))
+    if _provider_has_key(settings, "openrouter"):
+        entries.append(
+            LlmProviderEntry(name="openrouter", models=[settings.openrouter_model])
+        )
+    return entries
+
+
+def load_llm_catalog(settings: Settings | None = None) -> list[LlmProviderEntry]:
+    """Load ordered provider/model catalog; filter to providers with API keys."""
+    settings = settings or get_settings()
+    path = LLM_CATALOG_PATH if LLM_CATALOG_PATH.exists() else LLM_CATALOG_EXAMPLE_PATH
+    entries: list[LlmProviderEntry] = []
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        if isinstance(data, dict):
+            entries = _parse_catalog_yaml(data)
+    if not entries:
+        entries = _legacy_catalog_from_env(settings)
+    filtered = [e for e in entries if _provider_has_key(settings, e.name)]
+    if not filtered and settings.has_any_llm_key():
+        logger.warning("LLM catalog empty after filtering; check config/llm_models.yaml")
+    return filtered
 
 
 class Settings(BaseSettings):

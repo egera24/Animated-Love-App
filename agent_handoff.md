@@ -19,7 +19,7 @@ A **gift web app** for **Edina** featuring **Fahéj** (custom SVG hedgehog), Hun
 | FastAPI + SQLite + session auth | News RSS + summaries |
 | `GET /api/today` (weather, mood, daily bubble, optional poem/book/movie) | `CloudMediaStore` implementation |
 | **`POST /api/today/bubble/refresh`** — new bubble on each Fahéj tap | Render deploy + Postgres migration |
-| LLM router (Groq → Gemini → OpenRouter) + static fallback | PWA, admin/guest split UI |
+| LLM router (Groq → Gemini → OpenRouter, multi-model per provider) + static fallback | PWA, admin/guest split UI |
 | `daily_content` + `llm_usage` cache; static cache bypass when LLM keys set | Real MP3 hedgehog sounds (optional) |
 | `POST /internal/prefetch` + APScheduler 06:00 Budapest | |
 | Content corpora + `GET /api/content/{module}` | |
@@ -40,7 +40,7 @@ flowchart TD
   load["GET /api/today"]
   tap["POST /api/today/bubble/refresh"]
   cache["daily_content module=bubble"]
-  llm["generate_bubble Groq→Gemini→OpenRouter"]
+  llm["generate_bubble provider→model chain"]
   static["build_bubble_text JSON fallbacks"]
   load --> cache
   cache -->|miss or static+keys| llm
@@ -59,7 +59,7 @@ flowchart TD
 | **LLM keys + failed call** | Static text returned but **not** cached (retry on next tap) |
 | **Cached `static` + LLM keys** | Normal `GET` bypasses stale static and retries LLM |
 
-Interactive refresh sends **previous bubble** + random **variation_id** to Groq (temperature 1.0) so taps do not repeat the same line.
+Interactive refresh sends **previous bubble** + random **variation_id** to the first available model (temperature 1.0) so taps do not repeat the same line. On 429/5xx the router tries the next model, then the next provider (`config/llm_models.yaml`).
 
 **Do not use `GET /api/today?refresh_bubble=1` for taps** — removed from frontend; GET can be browser-cached. Tap must use POST.
 
@@ -93,6 +93,7 @@ Animated Love App/
   agent_handoff.md
   README.md
   docs/LLM_SETUP.md
+  config/llm_models.example.yaml  ← model fallback catalog (copy to llm_models.yaml to customize)
   .env / .env.example          ← APP_PASSWORD, SESSION_SECRET, LLM keys
   .env.llm.local.example       ← copy to .env.llm.local (gitignored)
   config/profile.yaml
@@ -193,7 +194,7 @@ Keys are **not** in git. See [docs/LLM_SETUP.md](docs/LLM_SETUP.md).
 5. `.\scripts\clear-bubble-cache.ps1` if old static text stuck
 6. `.\scripts\verify-llm.ps1` — expect `cache source: llm` after a fresh `/api/today`
 
-Env vars: `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, optional `LLM_DAILY_CALL_LIMIT` (default 50), `PREFETCH_SECRET`, `ENABLE_SCHEDULER`.
+Env vars: `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, optional `LLM_DAILY_CALL_LIMIT` (default 50), `LLM_CHAT_DAILY_CALL_LIMIT` (default 300), `PREFETCH_SECRET`, `ENABLE_SCHEDULER`. Model lists: `config/llm_models.yaml`.
 
 ---
 
@@ -237,7 +238,7 @@ Env vars: `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, optional `LLM_
 |------|--------|
 | Hungarian static copy | `data/fallbacks/messages_hu.json`, `backend/app/services/fallbacks.py` |
 | Bubble / tap / cache logic | `backend/app/services/bubble_service.py`, `backend/app/api/routes/today.py` |
-| LLM providers / prompts | `backend/app/services/llm/router.py` |
+| LLM providers / prompts / model catalog | `backend/app/services/llm/router.py`, `config/llm_models.yaml`, `backend/app/config.py` |
 | Tap → API wire-up | `frontend/src/App.tsx`, `frontend/src/api/client.ts` |
 | Dates / name / city | `config/profile.yaml` |
 | Hedgehog look/animation | `frontend/src/hedgehog/HedgehogCharacter.tsx`, `hedgehog.css` |

@@ -49,10 +49,8 @@ if ($gemini) { Set-EnvVar "GEMINI_API_KEY" $gemini }
 if ($openrouter) { Set-EnvVar "OPENROUTER_API_KEY" $openrouter }
 
 $defaults = @{
-    "GROQ_MODEL" = "llama-3.3-70b-versatile"
-    "GEMINI_MODEL" = "gemini-2.0-flash"
-    "OPENROUTER_MODEL" = "google/gemma-2-9b-it:free"
     "LLM_DAILY_CALL_LIMIT" = "50"
+    "LLM_CHAT_DAILY_CALL_LIMIT" = "300"
     "ENABLE_SCHEDULER" = "true"
 }
 foreach ($k in $defaults.Keys) {
@@ -70,5 +68,6 @@ if ($content -notmatch "(?m)^PREFETCH_SECRET=") {
 Set-Content -Path $envFile -Value $content.TrimEnd() -NoNewline -Encoding utf8
 Write-Host ""
 Write-Host "Saved. Restart backend: .\scripts\start-backend.ps1"
+Write-Host "Model fallback order: config\llm_models.yaml (see llm_models.example.yaml)"
 Write-Host "Then: .\scripts\clear-bubble-cache.ps1"
 Write-Host "Then: .\scripts\verify-llm.ps1"

@@ -8,12 +8,32 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
+BACKEND = ROOT / "backend"
+sys.path.insert(0, str(BACKEND))
+
 load_dotenv(ROOT / ".env")
 
 
 def key_ok(name: str) -> bool:
     v = os.getenv(name, "")
     return bool(v and v.strip())
+
+
+def print_catalog() -> None:
+    try:
+        from app.config import load_llm_catalog
+
+        catalog = load_llm_catalog()
+        if not catalog:
+            print("LLM catalog: (empty — add API keys or check config/llm_models.yaml)")
+            return
+        print("LLM catalog (fallback order):")
+        for entry in catalog:
+            print(f"  {entry.name}: {len(entry.models)} model(s)")
+            for model in entry.models:
+                print(f"    - {model}")
+    except Exception as e:
+        print(f"LLM catalog: could not load ({e})")
 
 
 def main() -> int:
@@ -29,6 +49,9 @@ def main() -> int:
     if not any(keys.values()):
         print("\nNo LLM keys in .env. Run: .\\scripts\\configure-llm.ps1")
         return 1
+
+    print()
+    print_catalog()
 
     try:
         import httpx

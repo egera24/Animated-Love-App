@@ -3,13 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import httpx
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.config import Settings, get_settings
+from app.config import LlmProviderEntry, Settings, get_settings, load_llm_catalog
 from app.services.llm.schemas import BubbleLLMResponse
 from app.services.llm.usage import UsageTracker
 
@@ -20,6 +21,15 @@ Első személyben beszélj. Legyél kedves, könnyed humorral — soha ne legyé
 Válaszod KIZÁRÓLAG érvényes JSON legyen, más szöveg nélkül:
 {"bubble_text": "...", "mood": "...", "language": "hu"}
 A mood mező egyezzen a kért hangulattal (ne változtasd meg a naptári logikát)."""
+
+BubbleCallFn = Callable[
+    [httpx.AsyncClient, Settings, str, str, float],
+    Awaitable[str | None],
+]
+ChatCallFn = Callable[
+    [httpx.AsyncClient, Settings, str, str, str, list[dict[str, str]], float],
+    Awaitable[str | None],
+]
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -80,6 +90,7 @@ def _build_user_prompt(
 async def _call_groq(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     user_prompt: str,
     *,
     temperature: float = 0.8,
@@ -94,7 +105,7 @@ async def _call_groq(
                 "Content-Type": "application/json",
             },
             json={
-                "model": settings.groq_model,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
@@ -105,18 +116,19 @@ async def _call_groq(
             timeout=30.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("Groq HTTP %s", r.status_code)
+            logger.warning("Groq HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning("Groq error: %s", e)
+        logger.warning("Groq error model=%s: %s", model, e)
         return None
 
 
 async def _call_gemini(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     user_prompt: str,
     *,
     temperature: float = 0.8,
@@ -125,7 +137,7 @@ async def _call_gemini(
         return None
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{settings.gemini_model}:generateContent"
+        f"{model}:generateContent"
     )
     try:
         r = await client.post(
@@ -144,7 +156,7 @@ async def _call_gemini(
             timeout=30.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("Gemini HTTP %s", r.status_code)
+            logger.warning("Gemini HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         data = r.json()
@@ -153,13 +165,14 @@ async def _call_gemini(
             return None
         return parts[0].get("text", "")
     except Exception as e:
-        logger.warning("Gemini error: %s", e)
+        logger.warning("Gemini error model=%s: %s", model, e)
         return None
 
 
 async def _call_openrouter(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     user_prompt: str,
     *,
     temperature: float = 0.8,
@@ -176,7 +189,7 @@ async def _call_openrouter(
                 "X-Title": "Fahéj App",
             },
             json={
-                "model": settings.openrouter_model,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
@@ -187,12 +200,12 @@ async def _call_openrouter(
             timeout=45.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("OpenRouter HTTP %s", r.status_code)
+            logger.warning("OpenRouter HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning("OpenRouter error: %s", e)
+        logger.warning("OpenRouter error model=%s: %s", model, e)
         return None
 
 
@@ -213,6 +226,7 @@ def _parse_bubble(raw: str | None, expected_mood: str) -> BubbleLLMResponse | No
 async def _chat_groq(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     system_prompt: str,
     messages: list[dict[str, str]],
     *,
@@ -228,7 +242,7 @@ async def _chat_groq(
                 "Content-Type": "application/json",
             },
             json={
-                "model": settings.groq_model,
+                "model": model,
                 "messages": [{"role": "system", "content": system_prompt}, *messages],
                 "temperature": temperature,
                 "max_tokens": 600,
@@ -236,18 +250,19 @@ async def _chat_groq(
             timeout=30.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("Groq chat HTTP %s", r.status_code)
+            logger.warning("Groq chat HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning("Groq chat error: %s", e)
+        logger.warning("Groq chat error model=%s: %s", model, e)
         return None
 
 
 async def _chat_gemini(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     system_prompt: str,
     messages: list[dict[str, str]],
     *,
@@ -257,7 +272,7 @@ async def _chat_gemini(
         return None
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{settings.gemini_model}:generateContent"
+        f"{model}:generateContent"
     )
     contents = [
         {
@@ -278,7 +293,7 @@ async def _chat_gemini(
             timeout=30.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("Gemini chat HTTP %s", r.status_code)
+            logger.warning("Gemini chat HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         data = r.json()
@@ -287,13 +302,14 @@ async def _chat_gemini(
             return None
         return parts[0].get("text", "")
     except Exception as e:
-        logger.warning("Gemini chat error: %s", e)
+        logger.warning("Gemini chat error model=%s: %s", model, e)
         return None
 
 
 async def _chat_openrouter(
     client: httpx.AsyncClient,
     settings: Settings,
+    model: str,
     system_prompt: str,
     messages: list[dict[str, str]],
     *,
@@ -311,7 +327,7 @@ async def _chat_openrouter(
                 "X-Title": "Fahéj App",
             },
             json={
-                "model": settings.openrouter_model,
+                "model": model,
                 "messages": [{"role": "system", "content": system_prompt}, *messages],
                 "temperature": temperature,
                 "max_tokens": 600,
@@ -319,13 +335,73 @@ async def _chat_openrouter(
             timeout=45.0,
         )
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
-            logger.warning("OpenRouter chat HTTP %s", r.status_code)
+            logger.warning("OpenRouter chat HTTP %s model=%s", r.status_code, model)
             return None
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning("OpenRouter chat error: %s", e)
+        logger.warning("OpenRouter chat error model=%s: %s", model, e)
         return None
+
+
+_BUBBLE_FNS: dict[str, BubbleCallFn] = {
+    "groq": _call_groq,
+    "gemini": _call_gemini,
+    "openrouter": _call_openrouter,
+}
+
+_CHAT_FNS: dict[str, ChatCallFn] = {
+    "groq": _chat_groq,
+    "gemini": _chat_gemini,
+    "openrouter": _chat_openrouter,
+}
+
+
+async def _try_bubble_catalog(
+    catalog: list[LlmProviderEntry],
+    client: httpx.AsyncClient,
+    settings: Settings,
+    user_prompt: str,
+    *,
+    temperature: float,
+) -> tuple[str, str, str] | None:
+    for provider in catalog:
+        fn = _BUBBLE_FNS.get(provider.name)
+        if fn is None:
+            continue
+        for model in provider.models:
+            raw = await fn(client, settings, model, user_prompt, temperature=temperature)
+            if raw is None:
+                logger.info("LLM fallback: %s/%s failed → trying next", provider.name, model)
+                continue
+            logger.info("LLM ok: %s/%s", provider.name, model)
+            return provider.name, model, raw
+    return None
+
+
+async def _try_chat_catalog(
+    catalog: list[LlmProviderEntry],
+    client: httpx.AsyncClient,
+    settings: Settings,
+    system_prompt: str,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float,
+) -> tuple[str, str, str] | None:
+    for provider in catalog:
+        fn = _CHAT_FNS.get(provider.name)
+        if fn is None:
+            continue
+        for model in provider.models:
+            raw = await fn(
+                client, settings, model, system_prompt, messages, temperature=temperature
+            )
+            if raw is None:
+                logger.info("LLM fallback: %s/%s failed → trying next", provider.name, model)
+                continue
+            logger.info("LLM ok: %s/%s", provider.name, model)
+            return provider.name, model, raw
+    return None
 
 
 async def generate_chat_reply(
@@ -335,7 +411,7 @@ async def generate_chat_reply(
     messages: list[dict[str, str]],
     temperature: float = 0.9,
 ) -> str | None:
-    """Multi-turn conversational reply. Shares the provider fallback chain with
+    """Multi-turn conversational reply. Shares the provider/model fallback chain with
     bubbles but has its own daily budget (category="chat")."""
     settings = get_settings()
     if not settings.has_any_llm_key():
@@ -350,21 +426,21 @@ async def generate_chat_reply(
         logger.info("LLM chat daily call limit reached")
         return None
 
-    providers = [
-        ("groq", _chat_groq),
-        ("gemini", _chat_gemini),
-        ("openrouter", _chat_openrouter),
-    ]
+    catalog = load_llm_catalog(settings)
+    if not catalog:
+        return None
 
     async with httpx.AsyncClient() as client:
-        for name, fn in providers:
-            raw = await fn(client, settings, system_prompt, messages, temperature=temperature)
-            if raw is None:
-                continue
-            tracker.record(name, calls=1)
-            text = raw.strip()
-            if text:
-                return text
+        result = await _try_chat_catalog(
+            catalog, client, settings, system_prompt, messages, temperature=temperature
+        )
+        if result is None:
+            return None
+        provider, model, raw = result
+        tracker.record(f"{provider}/{model}", calls=1)
+        text = raw.strip()
+        if text:
+            return text
 
     return None
 
@@ -385,6 +461,10 @@ async def generate_bubble(
         logger.info("LLM daily call limit reached")
         return None
 
+    catalog = load_llm_catalog(settings)
+    if not catalog:
+        return None
+
     recipient = profile.get("recipient", {}).get("name", "Edina")
     hedgehog = profile.get("hedgehog", {}).get("name", "Fahéj")
     language = profile.get("content", {}).get("default_language", "hu")
@@ -398,20 +478,16 @@ async def generate_bubble(
 
     temperature = 1.0 if context.get("interactive_refresh") else 0.8
 
-    providers = [
-        ("groq", _call_groq),
-        ("gemini", _call_gemini),
-        ("openrouter", _call_openrouter),
-    ]
-
     async with httpx.AsyncClient() as client:
-        for name, fn in providers:
-            raw = await fn(client, settings, user_prompt, temperature=temperature)
-            if raw is None:
-                continue
-            tracker.record(name, calls=1)
-            parsed = _parse_bubble(raw, expected_mood=mood)
-            if parsed:
-                return parsed
+        result = await _try_bubble_catalog(
+            catalog, client, settings, user_prompt, temperature=temperature
+        )
+        if result is None:
+            return None
+        provider, model, raw = result
+        tracker.record(f"{provider}/{model}", calls=1)
+        parsed = _parse_bubble(raw, expected_mood=mood)
+        if parsed:
+            return parsed
 
     return None

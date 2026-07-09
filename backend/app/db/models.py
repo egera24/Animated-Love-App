@@ -26,7 +26,7 @@ class LlmUsage(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     usage_date: Mapped[str] = mapped_column(String(10), index=True)
-    provider: Mapped[str] = mapped_column(String(32))
+    provider: Mapped[str] = mapped_column(String(96))
     calls: Mapped[int] = mapped_column(Integer, default=0)
     tokens: Mapped[int] = mapped_column(Integer, default=0)
 

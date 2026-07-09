@@ -78,7 +78,8 @@ Open [http://localhost:5173](http://localhost:5173) and log in with `APP_PASSWOR
 
 1. Create keys (see [docs/LLM_SETUP.md](docs/LLM_SETUP.md)).
 2. Run `.\scripts\configure-llm.ps1` or paste keys into `.env`.
-3. Restart backend, then `.\scripts\clear-bubble-cache.ps1`, then `.\scripts\verify-llm.ps1`.
+3. Optionally copy `config\llm_models.example.yaml` to `config\llm_models.yaml` and edit model order.
+4. Restart backend, then `.\scripts\clear-bubble-cache.ps1`, then `.\scripts\verify-llm.ps1`.
 
 Without keys, bubbles use static Hungarian text in `data/fallbacks/messages_hu.json`.
 
@@ -102,7 +103,7 @@ The API serves `frontend/dist` when present.
 
 ## Phase 1b
 
-- Multi-provider LLM for bubbles (Groq → Gemini → OpenRouter) — see [docs/LLM_SETUP.md](docs/LLM_SETUP.md)
+- Multi-provider LLM for bubbles (nested provider → model fallback) — see [docs/LLM_SETUP.md](docs/LLM_SETUP.md)
 - Daily poem / book / movie cards from `data/content/` (enable in `profile.yaml`)
 - News RSS summaries (planned)
 
